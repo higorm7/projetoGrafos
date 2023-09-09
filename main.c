@@ -165,6 +165,11 @@ void removerClienteDe(Grafo *g) {
     if (posicao == -1) {
         printf("\nErro: não há cliente com este nome e bairro");
     } else {
+        for (int i = 0; i < MAX; i++) {
+            g->m_adj[posicao][i] = 0;
+            g->m_adj[i][posicao] = 0;
+        }
+
         free(g->clientes[posicao]);
         g->clientes[posicao] = (Cliente*) malloc(sizeof(Cliente));
         g->clientes[posicao] = NULL;
