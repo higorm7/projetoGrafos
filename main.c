@@ -52,7 +52,7 @@ int buscarPosicaoVaziaEm(Grafo *g) {
 }
 
 /*
- * Função auxiliar que obtém a posição de um cliente c no grafo g
+ * Função auxiliar que obtém a posição de um cliente c no grafo g.
  */
 int obterPosicaoDoCliente(char *nome, char* bairro, Grafo *g) {
     for (int i = 0; i < MAX; i++) {
@@ -176,8 +176,14 @@ void adicionarCaminhoEntre(int indexInicio, int indexDestino, int viaMaoDupla, i
     }
 }
 
+/*
+ * Função que cria um caminho direcionado entre dois vértices. Solicita ao usuário os dois vértices, se não existirem,
+ * apresenta um erro e nada acontece. Se o usuário fornecer dois clientes iguais, também apresenta um erro. Caso contrá-
+ * rio, solicita o peso (distância) do caminho e valida se o peso fornecido é maior que 0. Além disso, valida se o cami-
+ * nho é uma via de mão dupla, ou seja, se age em ambas as direções. Se sim, cria o caminho do destino para a origem.
+ */
 void criarCaminhoEntreVertices(Grafo *g) {
-    int vertices[2];
+    int vertices[2] = {-1, -1};
 
     for (int i = 0; i < 2; i++) {
         char nome[10];
@@ -195,8 +201,12 @@ void criarCaminhoEntreVertices(Grafo *g) {
             return;
         }
 
+        if (obterPosicaoDoCliente(nome, bairro, g) == vertices[0]) {
+            printf("Erro: os clientes não podem ser iguais.");
+            return;
+        }
+
         vertices[i] = obterPosicaoDoCliente(nome, bairro, g);
-        printf("%d", vertices[i]);
     }
 
     int distancia;
@@ -208,7 +218,7 @@ void criarCaminhoEntreVertices(Grafo *g) {
         adicionarCaminhoEntre(vertices[0], vertices[1], 0, distancia, g);
 
         int choice;
-        printf("O caminho é via de mão dupla? (1 para sim, 0 para não)");
+        printf("O caminho é via de mão dupla? (1 para sim, 0 para não) ");
         scanf("%d", &choice);
         getchar();
 
@@ -217,6 +227,45 @@ void criarCaminhoEntreVertices(Grafo *g) {
         }
     } else {
         printf("\nErro: a distância deve ser maior que zero\n");
+    }
+}
+
+/*
+ * Função que remove um caminho entre dois vértices. Solicita o cliente de origem e o cliente de destino, se não houver
+ * caminho entre eles, apresenta um erro; se os clientes fornecidos forem o mesmo cliente, apresenta um erro; se não,
+ * remove o caminho entre os vértices na direção informada.
+ */
+void removerCaminhoEntreVertices(Grafo *g) {
+    int vertices[2] = {-1, -1};
+
+    for (int i = 0; i < 2; i++) {
+        char nome[10];
+        char bairro[10];
+
+        printf("Digite o nome do cliente %d: ", i + 1);
+        fgets(nome, 10, stdin);
+        nome[strcspn(nome, "\n")] = 0;
+        printf("Digite o bairro do cliente %d: ", i + 1);
+        fgets(bairro, 10, stdin);
+        bairro[strcspn(bairro, "\n")] = 0;
+
+        if (obterPosicaoDoCliente(nome, bairro, g) == -1) {
+            printf("Erro: o cliente não existe");
+            return;
+        }
+
+        if (obterPosicaoDoCliente(nome, bairro, g) == vertices[0]) {
+            printf("Erro: os clientes não podem ser iguais.");
+            return;
+        }
+
+        vertices[i] = obterPosicaoDoCliente(nome, bairro, g);
+    }
+
+    if (g->m_adj[vertices[0]][vertices[1]] > 0) {
+        g->m_adj[vertices[0]][vertices[1]] = 0;
+    } else {
+        printf("\nErro: não há caminho nesta direção entre os vértices citados.");
     }
 }
 
@@ -243,14 +292,14 @@ void imprimirMatrizDeAdjacenciaDe(Grafo *g) {
         }
 
         for (int j = 0; j < MAX; j++) {
-            printf("   %d   ", g->m_adj[i][j]);
+            printf("%5d  ", g->m_adj[i][j]);
         }
         printf("\n");
     }
 }
 
 /*
- * Função principal que exibe um menu de operações e apresentao resultado das funções.
+ * Função principal que exibe um menu de operações e apresenta o resultado das funções.
  */
 void exibirMenuDeOperacoes(Grafo *g) {
     int choice = 0;
@@ -260,6 +309,7 @@ void exibirMenuDeOperacoes(Grafo *g) {
         printf("Digite 2 para: buscar um cliente por nome e bairro\n");
         printf("Digite 3 para: remover um cliente\n");
         printf("Digite 4 para: adicionar um caminho entre dois clientes\n");
+        printf("Digite 5 para: remover um caminho entre dois clientes\n");
         printf("Digite 0 para: sair\n");
         printf("Escolha: ");
         scanf("%d", &choice);
@@ -282,6 +332,9 @@ void exibirMenuDeOperacoes(Grafo *g) {
                 criarCaminhoEntreVertices(g);
                 break;
             case 5:
+                removerCaminhoEntreVertices(g);
+                break;
+            case 6:
                 imprimirMatrizDeAdjacenciaDe(g);
                 break;
             case 0:
