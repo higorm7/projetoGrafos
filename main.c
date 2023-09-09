@@ -106,6 +106,21 @@ void adicionarClienteAo(Grafo *g) {
 }
 
 /*
+ * Função auxiliar que imprime os nós que estão conectados ao cliente na lógica: cliente informado é a origem e os
+ * clientes conectados são o destino. O laço ignora as conexões de tamanho igual a 0.
+ */
+void imprimirConexoesDoCliente(int indexCliente, Grafo *g) {
+    for (int i = 0; i < MAX; i++) {
+        if (g->m_adj[indexCliente][i] == 0) {
+            continue;
+        } else {
+            printf("Caminho para (%s, %s): %d km\n",
+                   g->clientes[i]->nome, g->clientes[i]->bairro, g->m_adj[indexCliente][i]);
+        }
+    }
+}
+
+/*
  * Função que imprime as informações do cliente informado pelo usuário.
  */
 void mostrarClienteDe(Grafo *g) {
@@ -124,6 +139,7 @@ void mostrarClienteDe(Grafo *g) {
     if (posicao != -1) {
         printf("\nNome do cliente: %s", g->clientes[posicao]->nome);
         printf("Bairro do cliente: %s\n\n", g->clientes[posicao]->bairro);
+        imprimirConexoesDoCliente(posicao, g);
     } else {
         printf("\nCliente informado não existe.");
     }
