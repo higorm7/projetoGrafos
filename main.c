@@ -3,6 +3,7 @@
 #include <string.h>
 
 #define MAX 10
+#define MAX_DISTANCE 100000000
 
 typedef struct {
     char *nome;
@@ -11,7 +12,7 @@ typedef struct {
 
 typedef struct {
     Cliente **clientes;
-    int **m_adj;
+    int m_adj[MAX][MAX];
     int n_vert;
 } Grafo;
 
@@ -29,10 +30,13 @@ Grafo *criarGrafo() {
     }
 
     g->n_vert = 0;
-    g->m_adj = (int**) malloc(MAX * sizeof(int*));
+    /*g->m_adj = (int**) malloc(MAX * sizeof(int*));
     for (int i = 0; i < MAX; i++) {
         g->m_adj[i] = (int*) malloc(MAX * sizeof(int));
-    }
+        for (int j = 0; j < MAX; j++) {
+            g->m_adj[i][j] = 0;
+        }
+    }*/
 
     return g;
 }
@@ -319,6 +323,73 @@ void imprimirMatrizDeAdjacenciaDe(Grafo *g) {
     }
 }
 
+void printPath(int currentVertex, int* parents, Grafo *g) {
+    if (currentVertex == -1) {
+        return;
+    }
+
+    printPath(parents[currentVertex], parents, g);
+    if (g->clientes[currentVertex] != NULL) {
+        printf("(%s, %s)", g->clientes[currentVertex]->nome, g->clientes[currentVertex]->bairro);
+    }
+}
+
+void printSolution(int startVertex, int* distances, int* parents, Grafo *g)
+{
+    printf("Vertex\t\t\t\tDistance\tPath");
+
+    for (int vertexIndex = 0; vertexIndex < MAX; vertexIndex++) {
+        if (vertexIndex != startVertex && g->clientes[startVertex] != NULL && g->clientes[vertexIndex] != NULL &&
+            distances[vertexIndex] != MAX_DISTANCE) {
+            printf("\n(%s, %s) -> ", g->clientes[startVertex]->nome, g->clientes[startVertex]->bairro);
+            printf("(%s, %s)\t\t", g->clientes[vertexIndex]->nome, g->clientes[vertexIndex]->bairro);
+            printf("%d\t\t", distances[vertexIndex]);
+            printPath(vertexIndex, parents, g);
+        }
+    }
+}
+
+void dijkstra(int adjacencyMatrix[MAX][MAX], int startVertex, Grafo *g) {
+    int* shortestDistances = malloc(MAX * sizeof(int));
+    int* added = malloc(MAX * sizeof(int));
+
+    for (int vertexIndex = 0; vertexIndex < MAX; vertexIndex++) {
+        shortestDistances[vertexIndex] = MAX_DISTANCE;
+        added[vertexIndex] = 0;
+    }
+
+    shortestDistances[startVertex] = 0;
+
+    int* parents = malloc(MAX * sizeof(int));
+
+    parents[startVertex] = -1;
+
+    for (int i = 1; i < MAX; i++) {
+        int nearestVertex = -1;
+        int shortestDistance = MAX_DISTANCE;
+
+        for (int vertexIndex = 0; vertexIndex < MAX; vertexIndex++) {
+            if (!added[vertexIndex] && shortestDistances[vertexIndex] < shortestDistance) {
+                nearestVertex = vertexIndex;
+                shortestDistance = shortestDistances[vertexIndex];
+            }
+        }
+
+        added[nearestVertex] = 1;
+
+        for (int vertexIndex = 0; vertexIndex < MAX; vertexIndex++) {
+            int edgeDistance = adjacencyMatrix[nearestVertex][vertexIndex];
+
+            if (edgeDistance > 0 && ((shortestDistance + edgeDistance) < shortestDistances[vertexIndex])) {
+                parents[vertexIndex] = nearestVertex;
+                shortestDistances[vertexIndex] = shortestDistance + edgeDistance;
+            }
+        }
+    }
+
+    printSolution(startVertex, shortestDistances, parents, g);
+}
+
 /*
  * Função principal que exibe um menu de operações e apresenta o resultado das funções.
  */
@@ -338,7 +409,6 @@ void exibirMenuDeOperacoes(Grafo *g) {
 
         switch (choice) {
             case 1:
-                printf("%d",buscarPosicaoVaziaEm(g));
                 adicionarClienteAo(g);
                 system("clear");
                 break;
@@ -361,13 +431,6 @@ void exibirMenuDeOperacoes(Grafo *g) {
             case 0:
                 break;
         }
-
-        printf("\n\n");
-        for (int i = 0; i < MAX; i++) {
-            if (g->clientes[i] != NULL) {
-                printf ("%s\n", g->clientes[i]->nome);
-            }
-        }
     } while (choice != 0);
 }
 
@@ -375,6 +438,7 @@ int main()
 {
     Grafo *g = criarGrafo();
     exibirMenuDeOperacoes(g);
+    dijkstra(g->m_adj, 0, g);
 
 
     return 0;
