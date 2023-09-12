@@ -142,11 +142,13 @@ void mostrarClienteDe(Grafo *g) {
 
     if (posicao != -1) {
         printf("\nNome do cliente: %s", g->clientes[posicao]->nome);
-        printf("Bairro do cliente: %s\n\n", g->clientes[posicao]->bairro);
+        printf("\nBairro do cliente: %s\n\n", g->clientes[posicao]->bairro);
         imprimirConexoesDoCliente(posicao, g);
     } else {
         printf("Cliente informado não existe.\n");
     }
+    
+    getchar();
 }
 
 /*
@@ -154,6 +156,12 @@ void mostrarClienteDe(Grafo *g) {
  * contrário, o espaço na memória que continha o cliente é liberado e, em seguida, é alocado novo espaço de memória.
  */
 void removerClienteDe(Grafo *g) {
+    if (g->n_vert == 0) {
+        printf("Não há clientes para remover.\n");
+        getchar();
+        return;
+    }
+    
     char nome[10];
     char bairro[10];
 
@@ -208,6 +216,11 @@ void adicionarCaminhoEntre(int indexInicio, int indexDestino, int viaMaoDupla, i
  * nho é uma via de mão dupla, ou seja, se age em ambas as direções. Se sim, cria o caminho do destino para a origem.
  */
 void criarCaminhoEntreVertices(Grafo *g) {
+    if (g->n_vert < 2) {
+        printf("Erro: adicione pelo menos dois vértices para isso.\n");
+        return;
+    }
+    
     int vertices[2] = {-1, -1};
 
     for (int i = 0; i < 2; i++) {
@@ -321,6 +334,8 @@ void imprimirMatrizDeAdjacenciaDe(Grafo *g) {
         }
         printf("\n");
     }
+    
+    getchar();
 }
 
 /*
@@ -368,7 +383,7 @@ void dijkstra(int adjacencyMatrix[MAX][MAX], Grafo *g) {
     int startVertex = obterPosicaoDoCliente(nome, bairro, g);
 
     if (startVertex == -1) {
-        printf("\nErro: não há cliente com este nome e bairro");
+        printf("\nErro: não há cliente com este nome e bairro\n");
     } else {
         int *shortestDistances = malloc(MAX * sizeof(int));
         int *added = malloc(MAX * sizeof(int));
@@ -441,19 +456,25 @@ void exibirMenuDeOperacoes(Grafo *g) {
                 break;
             case 3:
                 removerClienteDe(g);
+                system("clear");
                 break;
             case 4:
                 criarCaminhoEntreVertices(g);
+                system("clear");
                 break;
             case 5:
                 removerCaminhoEntreVertices(g);
+                system("clear");
                 break;
             case 6:
                 imprimirMatrizDeAdjacenciaDe(g);
+                system("clear");
                 break;
             case 7:
+                //fallthrough
                 dijkstra(g->m_adj, g);
             case 0:
+                system("clear");
                 break;
         }
     } while (choice != 0);
@@ -466,5 +487,3 @@ int main()
 
     return 0;
 }
-
-
