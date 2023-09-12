@@ -145,7 +145,7 @@ void mostrarClienteDe(Grafo *g) {
         printf("Bairro do cliente: %s\n\n", g->clientes[posicao]->bairro);
         imprimirConexoesDoCliente(posicao, g);
     } else {
-        printf("\nCliente informado não existe.");
+        printf("Cliente informado não existe.\n");
     }
 }
 
@@ -167,7 +167,7 @@ void removerClienteDe(Grafo *g) {
     int posicao = obterPosicaoDoCliente(nome, bairro, g);
 
     if (posicao == -1) {
-        printf("\nErro: não há cliente com este nome e bairro");
+        printf("\nErro: não há cliente com este nome e bairro\n");
     } else {
         for (int i = 0; i < MAX; i++) {
             g->m_adj[posicao][i] = 0;
@@ -191,7 +191,7 @@ void adicionarCaminhoEntre(int indexInicio, int indexDestino, int viaMaoDupla, i
     if (indexDestino == -1 || indexInicio == -1) {
         printf("\nErro: o vértice inicial e o destino devem existir.\n");
     } else if (g->m_adj[indexInicio][indexDestino] != 0) {
-        printf("\nErro: o caminho entre estes vértices na direção informada já existe");
+        printf("\nErro: o caminho entre estes vértices na direção informada já existe\n");
     } else {
         g->m_adj[indexInicio][indexDestino] = distancia;
 
@@ -222,12 +222,12 @@ void criarCaminhoEntreVertices(Grafo *g) {
         bairro[strcspn(bairro, "\n")] = 0;
 
         if (obterPosicaoDoCliente(nome, bairro, g) == -1) {
-            printf("Erro: o cliente não existe");
+            printf("Erro: o cliente não existe\n");
             return;
         }
 
         if (obterPosicaoDoCliente(nome, bairro, g) == vertices[0]) {
-            printf("Erro: os clientes não podem ser iguais.");
+            printf("Erro: os clientes não podem ser iguais.\n");
             return;
         }
 
@@ -323,6 +323,9 @@ void imprimirMatrizDeAdjacenciaDe(Grafo *g) {
     }
 }
 
+/*
+ * Função auxiliar que imprime o caminho de um vértice até outro.
+ */
 void printPath(int currentVertex, int* parents, Grafo *g) {
     if (currentVertex == -1) {
         return;
@@ -345,49 +348,67 @@ void printSolution(int startVertex, int* distances, int* parents, Grafo *g)
             printf("(%s, %s)\t\t", g->clientes[vertexIndex]->nome, g->clientes[vertexIndex]->bairro);
             printf("%d\t\t", distances[vertexIndex]);
             printPath(vertexIndex, parents, g);
+            printf("\n");
+            getchar();
         }
     }
 }
 
-void dijkstra(int adjacencyMatrix[MAX][MAX], int startVertex, Grafo *g) {
-    int* shortestDistances = malloc(MAX * sizeof(int));
-    int* added = malloc(MAX * sizeof(int));
+void dijkstra(int adjacencyMatrix[MAX][MAX], Grafo *g) {
+    char nome[10];
+    char bairro[10];
 
-    for (int vertexIndex = 0; vertexIndex < MAX; vertexIndex++) {
-        shortestDistances[vertexIndex] = MAX_DISTANCE;
-        added[vertexIndex] = 0;
-    }
+    printf("Digite o nome do cliente: ");
+    fgets(nome, 10, stdin);
+    nome[strcspn(nome, "\n")] = 0;
+    printf("Digite o bairro do cliente: ");
+    fgets(bairro, 10, stdin);
+    bairro[strcspn(bairro, "\n")] = 0;
 
-    shortestDistances[startVertex] = 0;
+    int startVertex = obterPosicaoDoCliente(nome, bairro, g);
 
-    int* parents = malloc(MAX * sizeof(int));
-
-    parents[startVertex] = -1;
-
-    for (int i = 1; i < MAX; i++) {
-        int nearestVertex = -1;
-        int shortestDistance = MAX_DISTANCE;
+    if (startVertex == -1) {
+        printf("\nErro: não há cliente com este nome e bairro");
+    } else {
+        int *shortestDistances = malloc(MAX * sizeof(int));
+        int *added = malloc(MAX * sizeof(int));
 
         for (int vertexIndex = 0; vertexIndex < MAX; vertexIndex++) {
-            if (!added[vertexIndex] && shortestDistances[vertexIndex] < shortestDistance) {
-                nearestVertex = vertexIndex;
-                shortestDistance = shortestDistances[vertexIndex];
+            shortestDistances[vertexIndex] = MAX_DISTANCE;
+            added[vertexIndex] = 0;
+        }
+
+        shortestDistances[startVertex] = 0;
+
+        int *parents = malloc(MAX * sizeof(int));
+
+        parents[startVertex] = -1;
+
+        for (int i = 1; i < MAX; i++) {
+            int nearestVertex = -1;
+            int shortestDistance = MAX_DISTANCE;
+
+            for (int vertexIndex = 0; vertexIndex < MAX; vertexIndex++) {
+                if (!added[vertexIndex] && shortestDistances[vertexIndex] < shortestDistance) {
+                    nearestVertex = vertexIndex;
+                    shortestDistance = shortestDistances[vertexIndex];
+                }
+            }
+
+            added[nearestVertex] = 1;
+
+            for (int vertexIndex = 0; vertexIndex < MAX; vertexIndex++) {
+                int edgeDistance = adjacencyMatrix[nearestVertex][vertexIndex];
+
+                if (edgeDistance > 0 && ((shortestDistance + edgeDistance) < shortestDistances[vertexIndex])) {
+                    parents[vertexIndex] = nearestVertex;
+                    shortestDistances[vertexIndex] = shortestDistance + edgeDistance;
+                }
             }
         }
 
-        added[nearestVertex] = 1;
-
-        for (int vertexIndex = 0; vertexIndex < MAX; vertexIndex++) {
-            int edgeDistance = adjacencyMatrix[nearestVertex][vertexIndex];
-
-            if (edgeDistance > 0 && ((shortestDistance + edgeDistance) < shortestDistances[vertexIndex])) {
-                parents[vertexIndex] = nearestVertex;
-                shortestDistances[vertexIndex] = shortestDistance + edgeDistance;
-            }
-        }
+        printSolution(startVertex, shortestDistances, parents, g);
     }
-
-    printSolution(startVertex, shortestDistances, parents, g);
 }
 
 /*
@@ -402,6 +423,8 @@ void exibirMenuDeOperacoes(Grafo *g) {
         printf("Digite 3 para: remover um cliente\n");
         printf("Digite 4 para: adicionar um caminho entre dois clientes\n");
         printf("Digite 5 para: remover um caminho entre dois clientes\n");
+        printf("Digite 6 para: ver a matriz de adjacência do grafo\n");
+        printf("Digite 7 para: ver os menores caminhos entre dois clientes\n");
         printf("Digite 0 para: sair\n");
         printf("Escolha: ");
         scanf("%d", &choice);
@@ -428,6 +451,8 @@ void exibirMenuDeOperacoes(Grafo *g) {
             case 6:
                 imprimirMatrizDeAdjacenciaDe(g);
                 break;
+            case 7:
+                dijkstra(g->m_adj, g);
             case 0:
                 break;
         }
@@ -438,8 +463,6 @@ int main()
 {
     Grafo *g = criarGrafo();
     exibirMenuDeOperacoes(g);
-    dijkstra(g->m_adj, 0, g);
-
 
     return 0;
 }
