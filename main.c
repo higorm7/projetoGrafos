@@ -311,7 +311,7 @@ void removerCaminhoEntreVertices(Grafo *g) {
  * Função que imprime a matriz de adjacência de um grafo g.
  */
 void imprimirMatrizDeAdjacenciaDe(Grafo *g) {
-    printf("\t\t");
+    printf("\t");
     for (int i = 0; i < MAX; i++) {
         if (g->clientes[i] == NULL) {
             printf("(0, 0) ");
@@ -352,24 +352,34 @@ void printPath(int currentVertex, int* parents, Grafo *g) {
     }
 }
 
-void printSolution(int startVertex, int* distances, int* parents, Grafo *g)
+void printSolution(int startVertex, int destinyVertex, int* distances, int* parents, Grafo *g)
 {
+    if (distances[destinyVertex] == MAX_DISTANCE) {
+        printf("Não há caminho entre os dois clientes\n");
+        getchar();
+        return;
+    }
+    
     printf("Vertex\t\t\t\tDistance\tPath");
 
-    for (int vertexIndex = 0; vertexIndex < MAX; vertexIndex++) {
-        if (vertexIndex != startVertex && g->clientes[startVertex] != NULL && g->clientes[vertexIndex] != NULL &&
-            distances[vertexIndex] != MAX_DISTANCE) {
-            printf("\n(%s, %s) -> ", g->clientes[startVertex]->nome, g->clientes[startVertex]->bairro);
-            printf("(%s, %s)\t\t", g->clientes[vertexIndex]->nome, g->clientes[vertexIndex]->bairro);
-            printf("%d\t\t", distances[vertexIndex]);
-            printPath(vertexIndex, parents, g);
-            printf("\n");
-            getchar();
-        }
+    if (destinyVertex != startVertex && g->clientes[startVertex] != NULL && g->clientes[destinyVertex] != NULL &&
+        distances[destinyVertex] != MAX_DISTANCE) {
+        printf("\n(%s, %s) -> ", g->clientes[startVertex]->nome, g->clientes[startVertex]->bairro);
+        printf("(%s, %s)\t\t", g->clientes[destinyVertex]->nome, g->clientes[destinyVertex]->bairro);
+        printf("%d\t\t", distances[destinyVertex]);
+        printPath(destinyVertex, parents, g);
+        printf("\n");
+        getchar();
     }
 }
 
 void dijkstra(int adjacencyMatrix[MAX][MAX], Grafo *g) {
+    if (g->n_vert < 2) {
+        printf("Adicione vértices suficientes para operar.\n");
+        getchar();
+        return;
+    }
+    
     char nome[10];
     char bairro[10];
 
@@ -381,49 +391,66 @@ void dijkstra(int adjacencyMatrix[MAX][MAX], Grafo *g) {
     bairro[strcspn(bairro, "\n")] = 0;
 
     int startVertex = obterPosicaoDoCliente(nome, bairro, g);
-
+    
     if (startVertex == -1) {
         printf("\nErro: não há cliente com este nome e bairro\n");
-    } else {
-        int *shortestDistances = malloc(MAX * sizeof(int));
-        int *added = malloc(MAX * sizeof(int));
+        getchar();
+        return;
+    }
+    
+    printf("Digite o nome do cliente: ");
+    fgets(nome, 10, stdin);
+    nome[strcspn(nome, "\n")] = 0;
+    printf("Digite o bairro do cliente: ");
+    fgets(bairro, 10, stdin);
+    bairro[strcspn(bairro, "\n")] = 0;
+    
+    int destinyVertex = obterPosicaoDoCliente(nome, bairro, g);
+    
+    if (destinyVertex == -1) {
+        printf("\nErro: não há cliente com este nome e bairro\n");
+        getchar();
+        return;
+    }
+
+    int *shortestDistances = malloc(MAX * sizeof(int));
+    int *added = malloc(MAX * sizeof(int));
+
+    for (int vertexIndex = 0; vertexIndex < MAX; vertexIndex++) {
+        shortestDistances[vertexIndex] = MAX_DISTANCE;
+        added[vertexIndex] = 0;
+    }
+
+    shortestDistances[startVertex] = 0;
+
+    int *parents = malloc(MAX * sizeof(int));
+
+    parents[startVertex] = -1;
+
+    for (int i = 1; i < MAX; i++) {
+        int nearestVertex = -1;
+        int shortestDistance = MAX_DISTANCE;
 
         for (int vertexIndex = 0; vertexIndex < MAX; vertexIndex++) {
-            shortestDistances[vertexIndex] = MAX_DISTANCE;
-            added[vertexIndex] = 0;
-        }
-
-        shortestDistances[startVertex] = 0;
-
-        int *parents = malloc(MAX * sizeof(int));
-
-        parents[startVertex] = -1;
-
-        for (int i = 1; i < MAX; i++) {
-            int nearestVertex = -1;
-            int shortestDistance = MAX_DISTANCE;
-
-            for (int vertexIndex = 0; vertexIndex < MAX; vertexIndex++) {
-                if (!added[vertexIndex] && shortestDistances[vertexIndex] < shortestDistance) {
-                    nearestVertex = vertexIndex;
-                    shortestDistance = shortestDistances[vertexIndex];
-                }
-            }
-
-            added[nearestVertex] = 1;
-
-            for (int vertexIndex = 0; vertexIndex < MAX; vertexIndex++) {
-                int edgeDistance = adjacencyMatrix[nearestVertex][vertexIndex];
-
-                if (edgeDistance > 0 && ((shortestDistance + edgeDistance) < shortestDistances[vertexIndex])) {
-                    parents[vertexIndex] = nearestVertex;
-                    shortestDistances[vertexIndex] = shortestDistance + edgeDistance;
-                }
+            if (!added[vertexIndex] && shortestDistances[vertexIndex] < shortestDistance) {
+                nearestVertex = vertexIndex;
+                shortestDistance = shortestDistances[vertexIndex];
             }
         }
 
-        printSolution(startVertex, shortestDistances, parents, g);
+        added[nearestVertex] = 1;
+
+        for (int vertexIndex = 0; vertexIndex < MAX; vertexIndex++) {
+            int edgeDistance = adjacencyMatrix[nearestVertex][vertexIndex];
+
+            if (edgeDistance > 0 && ((shortestDistance + edgeDistance) < shortestDistances[vertexIndex])) {
+                parents[vertexIndex] = nearestVertex;
+                shortestDistances[vertexIndex] = shortestDistance + edgeDistance;
+            }
+        }
     }
+
+    printSolution(startVertex, destinyVertex, shortestDistances, parents, g);
 }
 
 /*
@@ -474,7 +501,7 @@ void exibirMenuDeOperacoes(Grafo *g) {
                 //fallthrough
                 dijkstra(g->m_adj, g);
             case 0:
-                system("clear");
+            system("clear");
                 break;
         }
     } while (choice != 0);
@@ -487,3 +514,4 @@ int main()
 
     return 0;
 }
+
